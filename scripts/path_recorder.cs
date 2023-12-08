@@ -16,11 +16,12 @@ public class path_recorder : MonoBehaviour
     private string sceneNameHeader = "Scene Name is ";
     private string participantIdHeader = "Participant Number is ";
 
-    private bool headerWritten = false;
+    private bool headerWritten = false; // Flag to track if the header is written
 
     void Start()
     {
-        string participant = experimentFlow.participant;
+        // Set the file name based on the scene name and participant ID
+        string participant = experimentFlow.participant; // Assuming you have the participant ID set in the "experimentFlow" script
         fileName = "path_" + SceneManager.GetActiveScene().name + "_" + participant + DateTime.Now.ToString("_yyyy-MM-dd_hhmm") + ".txt";
     }
 
@@ -34,29 +35,31 @@ public class path_recorder : MonoBehaviour
         }
     }
 
+
     private void RecordPlayerPositionAndRotation()
     {
-        GameObject cameraRig = GameObject.Find("[CameraRig]");
-        if (cameraRig != null)
+        GameObject KeyboardMouseController = GameObject.Find("KeyboardMouseController");
+        if (KeyboardMouseController != null)
         {
-            Transform cameraTransform = cameraRig.transform.Find("Camera");
+           
+            Vector3 currentPosition = KeyboardMouseController.transform.position;
+            Vector3 currentRotation = KeyboardMouseController.transform.rotation.eulerAngles;
 
-            if (cameraTransform != null)
+            playerPositions.Add(new Vector3(currentPosition.x, currentPosition.y, currentPosition.z));
+            playerRotations.Add(new Vector3(currentRotation.x, currentRotation.y, currentRotation.z));
+
+            Debug.Log("Rotation added: " + currentRotation);
+
+            if (!headerWritten)
             {
-                Vector3 currentPosition = cameraRig.transform.position;
-                Vector3 currentRotation = cameraTransform.rotation.eulerAngles;
-
-                playerPositions.Add(new Vector3(currentPosition.x, currentPosition.y, currentPosition.z));
-                playerRotations.Add(new Vector3(currentRotation.x, currentRotation.y, currentRotation.z));
-
-                if (!headerWritten)
-                {
-                    WriteHeaderToFile();
-                    headerWritten = true;
-                }
+                WriteHeaderToFile();
+                headerWritten = true;
             }
+          
         }
     }
+
+
 
     private void WriteHeaderToFile()
     {
@@ -65,8 +68,9 @@ public class path_recorder : MonoBehaviour
         Directory.CreateDirectory(pathString);
         string fullFileName = Path.Combine(pathString, fileName);
 
-        string header = sceneNameHeader + SceneManager.GetActiveScene().name + "\n";
+        string header = sceneNameHeader  + SceneManager.GetActiveScene().name + "\n";
         header += participantIdHeader + experimentFlow.participant + "\n";
+        header += "x,y,z\n"; // Include "x", "y", and "z" as headers
         header += "x,y,z,x_rotation,y_rotation,z_rotation\n";
 
         using (StreamWriter sw = File.CreateText(fullFileName))
